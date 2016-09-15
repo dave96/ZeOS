@@ -4,12 +4,41 @@ char buff[24];
 
 int pid;
 
+long add(long a, long b) {
+	return a+b;
+}
+
+long inner(long count) {
+	long i, suma;
+	suma = 0;
+	for(i = 0; i < count; ++i) suma = add(suma, i);
+	return suma;
+}
+
+long outer(long count) {
+	long i, acum;
+	acum = 0;
+	for (i = 0; i < count; ++i) {
+		acum = add(acum, inner(i));
+		if (i == 49) {
+			i = 49;
+		}
+	}
+	return acum;
+}
+
 int __attribute__ ((__section__(".text.main")))
   main(void)
 {
     /* Next line, tries to move value 0 to CR3 register. This register is a privileged one, and so it will raise an exception */
      /* __asm__ __volatile__ ("mov %0, %%cr3"::"r" (0) ); */
-
-    
-  while(1) { }
+	long count = 75;
+	long acum = 0;
+	acum = outer(count);
+    while(1);
+    return 0;
 }
+
+
+
+
