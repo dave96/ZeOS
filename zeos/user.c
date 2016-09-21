@@ -4,8 +4,13 @@ char buff[24];
 
 int pid;
 
-long add(long a, long b) {
-	return a+b;
+int add(int a, int b) {
+	int ret;
+	__asm__ __volatile__ ("leal (%1, %2, 1), %0"
+			: "=r" (ret)
+			: "r" (a), "r" (b)
+			);
+	return ret;
 }
 
 long inner(long count) {
