@@ -13,21 +13,6 @@
 
 #include <sched.h>
 
-#define LECTURA 0
-#define ESCRIPTURA 1
-
-int check_fd(int fd, int permissions)
-{
-  if (fd!=1) return -9; /*EBADF*/
-  if (permissions!=ESCRIPTURA) return -13; /*EACCES*/
-  return 0;
-}
-
-int sys_ni_syscall()
-{
-	return -38; /*ENOSYS*/
-}
-
 int sys_getpid()
 {
 	return current()->PID;

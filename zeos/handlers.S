@@ -45,3 +45,25 @@ ENTRY(keyboard_handler)
 	POP_ALL
 	iret
 	
+ENTRY(clock_handler)
+	SAVE_ALL
+	EOI
+	call	clock_routine
+	POP_ALL
+	iret
+	
+ENTRY(system_call_handler)
+	SAVE_ALL
+	cmpl	$0, %eax
+	jl		error
+	cmp		$MAX_SYSCALL, %eax
+	jg		error
+	call	*sys_call_table(, %eax, 0x04)
+	jmp		fin
+error:
+	movl $-ENOSYS,	%eax
+fin:
+	movl %eax, 18(%esp); No lo tengo claro!
+	POP_ALL
+	iret
+	

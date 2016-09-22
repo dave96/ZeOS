@@ -5,6 +5,7 @@
 #include <interrupt.h>
 #include <segment.h>
 #include <handlers.h>
+#include <routines.h>
 #include <hardware.h>
 #include <io.h>
 
@@ -84,7 +85,7 @@ void setIdt()
   set_handlers();
     
   /* Defining interrupts */
-  setInterruptHandler(33, keyboard_handler, 0);
+  init_interrupt_handlers();
   /* End interrupts */
 
   /* ADD INITIALIZATION CODE FOR INTERRUPT VECTOR */
