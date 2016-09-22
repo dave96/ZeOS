@@ -2,8 +2,9 @@
 #include <interrupt.h> // setInterruptHandler
 #include <zeos_interrupt.h> // zeos_show_clock
 #include <io.h> // inb, printc_xy
-#include <device.h>
+#include <devices.h>
 #include <handlers.h>
+#include <utils.h>
 
 void keyboard_routine() {
 	// ISR 33 - Key Press.
@@ -33,8 +34,11 @@ int sys_write(int fd, char * buffer, int size) {
 	int err = check_fd(fd, ESCRIPTURA);
 	if (err < 0) return err;
 	
-	// Check buffer
-	if (buffer == NULL) 
+	// Check buffer & size
+	if (buffer == NULL || size < 0) return -EINVAL;
+
+	// Print
+	return sys_write_console(buffer, size);
 }
 
 int sys_ni_syscall()
@@ -44,8 +48,8 @@ int sys_ni_syscall()
 
 int check_fd(int fd, int permissions)
 {
-  if (fd!=1) return -9; /*EBADF*/
-  if (permissions!=ESCRIPTURA) return -13; /*EACCES*/
+  if (fd != 1) return -9; /*EBADF*/
+  if (permissions != ESCRIPTURA) return -13; /*EACCES*/
   return 0;
 }
 

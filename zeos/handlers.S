@@ -1,6 +1,8 @@
 #include <asm.h>
 #include <segment.h>
 
+#define	ENOSYS		38
+
 #define SAVE_ALL \
       pushl %gs; \
       pushl %fs; \
@@ -63,7 +65,7 @@ ENTRY(system_call_handler)
 error:
 	movl $-ENOSYS,	%eax
 fin:
-	movl %eax, 18(%esp); No lo tengo claro!
+	movl %eax, 24(%esp)
 	POP_ALL
 	iret
 	

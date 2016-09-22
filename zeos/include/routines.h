@@ -5,6 +5,9 @@
 #define LECTURA 0
 #define ESCRIPTURA 1
 
+// Error numbers
+#define	EINVAL		22	/* Invalid argument */
+
 // Estructuras
 extern char char_map[];
 
