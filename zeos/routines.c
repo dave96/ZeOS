@@ -26,7 +26,8 @@ void keyboard_routine() {
 
 void clock_routine() {
 	// Do some shit
-	// zeos_show_clock();
+	zeos_ticks++;
+	zeos_show_clock();
 }
 
 int sys_write(int fd, char * buffer, int size) {
@@ -39,6 +40,10 @@ int sys_write(int fd, char * buffer, int size) {
 
 	// Print
 	return sys_write_console(buffer, size);
+}
+
+int sys_gettime() {
+	return zeos_ticks;
 }
 
 int sys_ni_syscall()

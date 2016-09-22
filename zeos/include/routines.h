@@ -10,6 +10,7 @@
 
 // Estructuras
 extern char char_map[];
+int	zeos_ticks;
 
 // Interrupciones
 void keyboard_routine();

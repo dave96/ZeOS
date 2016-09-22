@@ -43,5 +43,20 @@ int strlen(char *a)
   return i;
 }
 
+// Wrappers de llamadas en C.
+// Aquí solo están los wrappers sencillos. Los que aceptan parámetros
+// están implementados en assembler en libc_asm.S
+
+int gettime() {
+	int ret;
+	__asm__ __volatile__ ("movl $10, %%eax\n\t"
+						"int $0x80\n\t"
+						"movl %%eax, %0"
+						: "=r" (ret)
+						:
+						: "eax");	
+	return ret;
+}
+
 
 

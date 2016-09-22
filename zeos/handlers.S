@@ -19,7 +19,7 @@
       movl %edx, %ds;           \
       movl %edx, %es
 
-#define POP_ALL \
+#define RESTORE_ALL \
       popl %ebx; \
       popl %ecx; \
       popl %edx; \
@@ -44,14 +44,14 @@ ENTRY(keyboard_handler)
 	SAVE_ALL
 	EOI
 	call 	keyboard_routine
-	POP_ALL
+	RESTORE_ALL
 	iret
 	
 ENTRY(clock_handler)
 	SAVE_ALL
 	EOI
 	call	clock_routine
-	POP_ALL
+	RESTORE_ALL
 	iret
 	
 ENTRY(system_call_handler)
@@ -66,6 +66,6 @@ error:
 	movl $-ENOSYS,	%eax
 fin:
 	movl %eax, 24(%esp)
-	POP_ALL
+	RESTORE_ALL
 	iret
 	
