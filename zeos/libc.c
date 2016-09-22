@@ -6,8 +6,6 @@
 
 #include <types.h>
 
-int errno;
-
 void itoa(int a, char *b)
 {
   int i, i1;
@@ -43,9 +41,7 @@ int strlen(char *a)
   return i;
 }
 
-// Wrappers de llamadas en C.
-// Aquí solo están los wrappers sencillos. Los que aceptan parámetros
-// están implementados en assembler en libc_asm.S
+// Wrappers de llamadas a sistema.
 
 int gettime() {
 	int ret;
@@ -54,9 +50,29 @@ int gettime() {
 						"movl %%eax, %0"
 						: "=r" (ret)
 						:
-						: "eax");	
+						: "eax");
+	if (ret < 0) {
+		errno = ret*(-1);
+		return -1;
+	}
 	return ret;
 }
 
+int write(int fd, char *buffer, int size) {
+	int ret;
+	
+	__asm__ __volatile__ ("movl $4, %%eax\n\t"
+						"int $0x80\n\t"
+						"movl %%eax, %0"
+						: "=r" (ret)
+						: "b" (fd), "c" (buffer), "d" (size)
+						: "eax");
+	
+	if (ret < 0) {
+		errno = ret*(-1);
+		return -1;
+	}
+	return ret;
+}
 
 

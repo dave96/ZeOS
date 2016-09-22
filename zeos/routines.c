@@ -25,7 +25,6 @@ void keyboard_routine() {
 }
 
 void clock_routine() {
-	// Do some shit
 	zeos_ticks++;
 	zeos_show_clock();
 }
