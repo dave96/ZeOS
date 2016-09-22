@@ -4,6 +4,7 @@
 #include <types.h>
 #include <interrupt.h>
 #include <segment.h>
+#include <handlers.h>
 #include <hardware.h>
 #include <io.h>
 
@@ -81,6 +82,10 @@ void setIdt()
   idtR.limit = IDT_ENTRIES * sizeof(Gate) - 1;
   
   set_handlers();
+    
+  /* Defining interrupts */
+  setInterruptHandler(33, keyboard_handler, 0);
+  /* End interrupts */
 
   /* ADD INITIALIZATION CODE FOR INTERRUPT VECTOR */
 
