@@ -5,6 +5,7 @@
 #include <devices.h>
 #include <handlers.h>
 #include <utils.h>
+#include <segment.h>
 
 void keyboard_routine() {
 	// ISR 33 - Key Press.
@@ -34,8 +35,11 @@ int sys_write(int fd, char * buffer, int size) {
 	int err = check_fd(fd, ESCRIPTURA);
 	if (err < 0) return err;
 	
-	// Check buffer & size
-	if (buffer == NULL || size < 0) return -EINVAL;
+	// Check buffer address
+	if (buffer == NULL) return -EINVAL;
+
+	// Check size
+	if (size < 0) return -EINVAL;
 
 	// Print
 	return sys_write_console(buffer, size);

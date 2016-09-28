@@ -23,3 +23,4 @@ int sys_write(int fd, char * buffer, int size);
 void init_interrupt_handlers();
 
 // Uso interno
+int check_fd(int fd, int persmissions);
