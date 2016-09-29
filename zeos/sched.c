@@ -62,7 +62,23 @@ void cpu_idle(void)
 
 void init_idle (void)
 {
+	// Cogemos la primera entrada de la lista y la quitamos de ella.
+	struct list_head *freeHead = list_first(freequeue);
+	list_del(freeHead);
+	
+	// Entramos al task_struct
+	struct task_struct *new = list_head_to_task_struct(freeHead);
 
+	// Asignamos al task_struct el PID 0
+	new->PID = 0;
+	
+	// Allocateamos una nueva página para el proceso.
+	allocate_DIR(new);
+	
+	// Definimos el contexto de restauración (TODO)
+	
+	// Definimos variable global
+	idle_task = new; 
 }
 
 void init_task1(void)

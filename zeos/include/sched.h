@@ -27,7 +27,7 @@ union task_union {
 
 extern union task_union protected_tasks[NR_TASKS+2];
 extern union task_union *task; /* Vector de tasques */
-extern struct task_struct *idle_task;
+struct task_struct *idle_task;
 
 struct list_head freequeue;
 struct list_head readyqueue;
