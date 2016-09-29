@@ -36,7 +36,7 @@ int sys_write(int fd, char * buffer, int size) {
 	if (err < 0) return err;
 	
 	// Check buffer address
-	if (buffer == NULL) return -EINVAL;
+	if (buffer == NULL) return -EFAULT;
 
 	// Check size
 	if (size < 0) return -EINVAL;

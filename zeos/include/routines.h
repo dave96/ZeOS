@@ -7,6 +7,7 @@
 
 // Error numbers
 #define	EINVAL		22	/* Invalid argument */
+#define	EFAULT		14	/* Bad address */
 
 // Estructuras
 extern char char_map[];
