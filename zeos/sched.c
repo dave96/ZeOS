@@ -5,6 +5,7 @@
 #include <sched.h>
 #include <mm.h>
 #include <io.h>
+#include <list.h>
 
 /**
  * Container for the Task array and 2 additional pages (the first and the last one)
@@ -70,7 +71,18 @@ void init_task1(void)
 
 
 void init_sched(){
-
+	// Init list_head structures for queues.
+	INIT_LIST_HEAD(&freequeue);
+	INIT_LIST_HEAD(&readyqueue);
+	
+	// Place all task structures in the freequeue as no tasks are running.
+	int i;
+	for(i = 0; i < NR_TASKS; ++i) {
+		list_add_tail(&(task[i].task.list), &freequeue);
+	}
+	
+	
+	
 }
 
 struct task_struct* current()
