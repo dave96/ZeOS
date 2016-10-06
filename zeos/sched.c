@@ -16,12 +16,10 @@ union task_union protected_tasks[NR_TASKS+2]
 
 union task_union *task = &protected_tasks[1]; /* == union task_union task[NR_TASKS] */
 
-#if 0
 struct task_struct *list_head_to_task_struct(struct list_head *l)
 {
   return list_entry( l, struct task_struct, list);
 }
-#endif
 
 extern struct list_head blocked;
 
@@ -63,7 +61,7 @@ void cpu_idle(void)
 void init_idle (void)
 {
 	// Cogemos la primera entrada de la lista y la quitamos de ella.
-	struct list_head *freeHead = list_first(freequeue);
+	struct list_head *freeHead = list_first(&freequeue);
 	list_del(freeHead);
 	
 	// Entramos al task_struct
@@ -75,7 +73,11 @@ void init_idle (void)
 	// Allocateamos una nueva página para el proceso.
 	allocate_DIR(new);
 	
-	// Definimos el contexto de restauración (TODO)
+	// Definimos el contexto de restauración (ebp i @RET) y cambiamos esp.
+	union task_union * t = (union task_union *) new;
+	t->stack[KERNEL_STACK_SIZE - 2] = 0x666;
+	t->stack[KERNEL_STACK_SIZE - 1] = (unsigned long) &cpu_idle;
+	new->esp = (unsigned long) &(t->stack) + KERNEL_STACK_SIZE*4 - 8;
 	
 	// Definimos variable global
 	idle_task = new; 
@@ -83,6 +85,7 @@ void init_idle (void)
 
 void init_task1(void)
 {
+	
 }
 
 

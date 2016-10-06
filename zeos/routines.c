@@ -41,7 +41,7 @@ int sys_write(int fd, char * buffer, int size) {
 	// Check size
 	if (size < 0) return -EINVAL;
 
-	// Print
+	// UPDATE -> COPY TO USER WITH FIXED SIZE BUFFER !important
 	return sys_write_console(buffer, size);
 }
 
