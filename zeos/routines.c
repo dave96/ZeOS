@@ -10,7 +10,7 @@
 
 void keyboard_routine() {
 	// DEBUG
-	if (current() != idle_task) task_switch((union task_union *)idle_task);
+	if (current() != (union task_union *) idle_task) task_switch((union task_union *) idle_task);
 	else task_switch(&task[1]);
 	
 	// ISR 33 - Key Press.

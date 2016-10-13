@@ -73,6 +73,7 @@ ENTRY(task_switch)
 	pushl	%esi
 	pushl	%edi
 	pushl	%ebx
+	AIXO NO FUNCA
 	call	inner_task_switch
 	popl	%ebx
 	popl	%edi
