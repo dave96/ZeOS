@@ -6,6 +6,7 @@
 #include <mm.h>
 #include <io.h>
 #include <list.h>
+#include <handlers.h>
 
 /**
  * Container for the Task array and 2 additional pages (the first and the last one)
@@ -80,12 +81,33 @@ void init_idle (void)
 	new->esp = (unsigned long) &(t->stack) + KERNEL_STACK_SIZE*4 - 8;
 	
 	// Definimos variable global
-	idle_task = new; 
+	idle_task = new;
 }
 
 void init_task1(void)
 {
+	// Cogemos la primera entrada de la lista y la quitamos de ella.
+	struct list_head *freeHead = list_first(&freequeue);
+	list_del(freeHead);
 	
+	// Entramos al task_struct
+	struct task_struct *new = list_head_to_task_struct(freeHead);
+
+	// Asignamos al task_struct el PID 1
+	new->PID = 1;
+	
+	// Allocateamos una nueva página para el proceso.
+	allocate_DIR(new);
+	
+	// Configuramos sus páginas de código y datos
+	set_user_pages(new);
+	
+	// Update del TSS para apuntar a la system stack de new
+	union task_union * t = (union task_union *) new;
+	tss.esp0 = KERNEL_ESP(t);
+	
+	// Cambiamos cr3 al page directory de Task 1 y flush de TLB
+	set_cr3(get_DIR(new));
 }
 
 
@@ -99,8 +121,28 @@ void init_sched(){
 	for(i = 0; i < NR_TASKS; ++i) {
 		list_add_tail(&(task[i].task.list), &freequeue);
 	}
+}
+
+void inner_task_switch(union task_union *t) {
+	// Cambiamos el directorio actual
+	set_cr3(get_DIR(&(t->task)));
 	
+	// Guardamos ebp en el pcb.
+	__asm__ __volatile__(
+		"movl %%ebp, %0"
+		: "=m" (current()->esp)
+		: // No input
+	);
 	
+	// Movemos a esp el puntero de t.
+	__asm__ __volatile__(
+		"movl %0, %%ebp"
+		: // No output
+		: "r" (t->task.esp)
+	);
+	
+	// Actualizamos tss
+	tss.esp0 = KERNEL_ESP(t);
 	
 }
 

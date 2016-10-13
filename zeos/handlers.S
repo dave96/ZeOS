@@ -68,4 +68,13 @@ fin:
 	movl %eax, 24(%esp)
 	RESTORE_ALL
 	iret
-	
+
+ENTRY(task_switch)
+	pushl	%esi
+	pushl	%edi
+	pushl	%ebx
+	call	inner_task_switch
+	popl	%ebx
+	popl	%edi
+	popl	%esi
+	ret

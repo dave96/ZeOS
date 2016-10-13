@@ -3,11 +3,16 @@
 #include <zeos_interrupt.h> // zeos_show_clock
 #include <io.h> // inb, printc_xy
 #include <devices.h>
+#include <sched.h>
 #include <handlers.h>
 #include <utils.h>
 #include <segment.h>
 
 void keyboard_routine() {
+	// DEBUG
+	if (current() != idle_task) task_switch((union task_union *)idle_task);
+	else task_switch(&task[1]);
+	
 	// ISR 33 - Key Press.
 	unsigned char input = inb(__DATA_PORT);
 	

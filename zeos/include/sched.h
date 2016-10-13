@@ -27,6 +27,25 @@ union task_union {
   unsigned long stack[KERNEL_STACK_SIZE];    /* pila de sistema, per procés */
 };
 
+struct execution_context {
+	DWord ebx;
+	DWord ecx;
+	DWord edx;
+	DWord esi;
+	DWord edi;
+	DWord ebp;
+	DWord eax;
+	DWord ds;
+	DWord es;
+	DWord fs;
+	DWord gs;
+	DWord eip;
+	DWord cs;
+	DWord eflags;
+	DWord esp;
+	DWord ss;
+};
+
 extern union task_union protected_tasks[NR_TASKS+2];
 extern union task_union *task; /* Vector de tasques */
 struct task_struct *idle_task;
@@ -48,7 +67,7 @@ void init_sched(void);
 
 struct task_struct * current();
 
-void task_switch(union task_union*t);
+void inner_task_switch(union task_union*t);
 
 struct task_struct *list_head_to_task_struct(struct list_head *l);
 
