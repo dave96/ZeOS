@@ -8,6 +8,7 @@
 // Error numbers
 #define	EINVAL		22	/* Invalid argument */
 #define	EFAULT		14	/* Bad address */
+#define	ENOMEM		12	/* Out of memory */
 
 // Estructuras
 extern char char_map[];
@@ -19,6 +20,9 @@ void clock_routine();
 
 // Llamadas a sistema
 int sys_write(int fd, char * buffer, int size);
+int sys_getpid();
+int sys_gettime();
+int sys_fork();
 
 // Uso externo
 void init_interrupt_handlers();

@@ -73,6 +73,8 @@ struct task_struct *list_head_to_task_struct(struct list_head *l);
 
 int allocate_DIR(struct task_struct *t);
 
+int get_current_pid();
+
 page_table_entry * get_PT (struct task_struct *t) ;
 
 page_table_entry * get_DIR (struct task_struct *t) ;

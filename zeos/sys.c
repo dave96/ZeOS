@@ -13,20 +13,6 @@
 
 #include <sched.h>
 
-int sys_getpid()
-{
-	return current()->PID;
-}
-
-int sys_fork()
-{
-  int PID=-1;
-
-  // creates the child process
-  
-  return PID;
-}
-
 void sys_exit()
 {  
 }

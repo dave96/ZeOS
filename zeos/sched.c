@@ -54,7 +54,7 @@ void cpu_idle(void)
 
 	while(1)
 	{
-	;
+		printc('0' + (char) current()->PID);
 	}
 }
 
