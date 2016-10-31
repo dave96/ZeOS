@@ -48,6 +48,8 @@ int allocate_DIR(struct task_struct *t)
 	return 1;
 }
 
+/* MULTITASK MANAGEMENT FUNCTIONS */
+
 void cpu_idle(void)
 {
 	__asm__ __volatile__("sti": : :"memory");
@@ -70,6 +72,9 @@ void init_idle (void)
 	// Asignamos al task_struct el PID 0
 	new->PID = 0;
 	
+	// Asignamos un quantum de 1 para que el proceso no se quede en la cpu más de lo necesario.
+	set_quantum(new, 1);
+	
 	// Allocateamos una nueva página para el proceso.
 	allocate_DIR(new);
 	
@@ -91,7 +96,11 @@ void init_task1(void)
 	
 	// Entramos al task_struct
 	struct task_struct *new = list_head_to_task_struct(freeHead);
-
+	
+	// Ponemos el quantum
+	set_quantum(new, DEFAULT_QUANTUM);
+	current_ticks_left = DEFAULT_QUANTUM;
+	
 	// Asignamos al task_struct el PID 1
 	new->PID = 1;
 	
@@ -115,11 +124,21 @@ void init_sched(){
 	INIT_LIST_HEAD(&freequeue);
 	INIT_LIST_HEAD(&readyqueue);
 	
+	// Set initial PID.
+	current_pid = 100;
+	
 	// Place all task structures in the freequeue as no tasks are running.
 	int i;
 	for(i = 0; i < NR_TASKS; ++i) {
 		list_add_tail(&(task[i].task.list), &freequeue);
 	}
+}
+
+int get_new_pid(void) {
+	if (current_pid == PID_MAX) current_pid = 2;
+	else current_pid++;
+	
+	return current_pid;
 }
 
 void inner_task_switch(union task_union *t) {
@@ -156,3 +175,52 @@ struct task_struct* current()
   return (struct task_struct*)(ret_value&0xfffff000);
 }
 
+
+/* SCHEDULING POLICY FUNCTIONS */
+
+void sched_next_rr() {
+	struct task_struct *next;
+	
+	if (current() != idle_task) update_process_state_rr(current(), &readyqueue);
+	
+	if (list_empty(&readyqueue)) next = idle_task;
+	else {
+		next = list_head_to_task_struct(list_first(&readyqueue));
+		update_process_state_rr(next, NULL);
+	}
+	
+	current_ticks_left = get_quantum(next);
+	
+	task_switch(next);
+}
+
+void update_process_state_rr(struct task_struct *t, struct list_head *dest) {
+	if (t != current()) list_del(&(t->list));
+	if (dest != NULL) list_add_tail(&(t->list), dest);
+}
+
+int needs_sched_rr() {
+	// Si no queda quantum y no hay procesos esperando.
+	if (current_ticks_left <= 0) {
+		if (!list_empty(&readyqueue)) return 1;
+		else current_ticks_left = 1; // No hay procesos en cola, le damos un tick más.
+	}
+	return 0;
+}
+
+void update_sched_data_rr() {
+	current_ticks_left--;
+}
+
+void schedule() {
+	update_sched_data_rr();
+	if (needs_sched_rr()) sched_next_rr();
+}
+
+int get_quantum(struct task_struct *t) {
+	return t->quantum;
+}
+
+void set_quantum(struct task_struct *t, int new_quantum) {
+	t->quantum = new_quantum;
+}

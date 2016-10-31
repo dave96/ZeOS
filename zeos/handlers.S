@@ -85,3 +85,7 @@ ENTRY(task_switch)
 	movl	%ebp, %esp
 	popl 	%ebp
 	ret
+
+ENTRY(ret_from_fork)
+	movl $0, %eax
+	ret

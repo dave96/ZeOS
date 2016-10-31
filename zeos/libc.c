@@ -73,6 +73,21 @@ int getpid() {
 	return ret;
 }
 
+int fork() {
+	int ret;
+	__asm__ __volatile__ ("movl $2, %%eax\n\t"
+						"int $0x80\n\t"
+						"movl %%eax, %0"
+						: "=r" (ret)
+						:
+						: "eax");
+	if (ret < 0) {
+		errno = ret*(-1);
+		return -1;
+	}
+	return ret;
+}
+
 int write(int fd, char *buffer, int size) {
 	int ret;
 	

@@ -6,6 +6,7 @@
 #include <sched.h>
 #include <handlers.h>
 #include <utils.h>
+#include <mm.h>
 #include <segment.h>
 
 void keyboard_routine() {
@@ -22,9 +23,6 @@ void keyboard_routine() {
 		} else {
 			printc_xy(0, 0, 'C');
 		}
-		// DEBUG
-		if (current() != (union task_union *) idle_task) task_switch((union task_union *) idle_task);
-		else task_switch(&task[1]);
 	}
 
 	
@@ -34,6 +32,7 @@ void keyboard_routine() {
 void clock_routine() {
 	zeos_ticks++;
 	zeos_show_clock();
+	schedule();
 }
 
 int sys_write(int fd, char * buffer, int size) {
@@ -64,7 +63,7 @@ int sys_ni_syscall() {
 }
 
 int sys_fork() {
-	int PID=-1;
+	int PID = get_new_pid();
 
 	// Try to create a new task_struct. If no free task structs, return error.
 
@@ -73,15 +72,21 @@ int sys_fork() {
 	// There are availible task structs. We will only remove it from the list if we can allocate memory later.
 
 	struct list_head *freeHead = list_first(&freequeue);
-	/*list_del(freeHead);*/
+	struct task_struct *newTask = list_head_to_task_struct(freeHead);
+	
+	struct list_head anchor = newTask->list;
 
 	// Copy the parent task_union to the child.
 
-	copy_data(current(), freeHead, KERNEL_STACK_SIZE*4);
+	copy_data(current(), newTask, KERNEL_STACK_SIZE*4);
+	
+	// Restore list anchor!
+	
+	newTask -> list = anchor;
 
 	// Allocate directory for child
 
-	allocate_DIR(freeHead);
+	allocate_DIR(newTask);
 
 	// Try to allocate data pages.
 
@@ -98,7 +103,7 @@ int sys_fork() {
 
 	// Get the page tables.
 
-	page_table_entry *child = get_PT(freeHead);
+	page_table_entry *child = get_PT(newTask);
 	page_table_entry *parent = get_PT(current());
   
 	// We have enough memory for the user data. Now map the frames to the logical part.
@@ -116,16 +121,29 @@ int sys_fork() {
 	
 	for (pg=0; pg < NUM_PAG_DATA; pg++) {
 		set_ss_pag(parent, PAG_LOG_INIT_DATA + NUM_PAG_DATA + pg, user_pages[pg]);
-		copy_data(
+		copy_data((void * ) ((PAG_LOG_INIT_DATA+pg)*PAGE_SIZE), (void *) ((PAG_LOG_INIT_DATA + NUM_PAG_DATA + pg)*PAGE_SIZE), PAGE_SIZE);
+		del_ss_pag(parent, PAG_LOG_INIT_DATA + NUM_PAG_DATA + pg);
 	}
 	
+	// Flush TLB
+	set_cr3(get_DIR(current()));
 	
-}
-  
-  
-  // creates the child process
-  
-  return PID;
+	// After copying, we have to assign a new PID
+	newTask->PID = PID;
+	
+	// Now, the ESP for the new process. We will set this in order to simulate a task_switch call.
+	// EBP <- @RET(RET_FROM_FORK) <- @RET(SYSCALL HANDLER) <- EXECUTION CONTEXT
+	newTask->esp = KERNEL_ESP((union task_union *) newTask) - sizeof(struct execution_context) - 12;
+	
+	((union task_union *) newTask)->stack[KERNEL_STACK_SIZE-16-2] = (unsigned long) &ret_from_fork; // @RET(RET_FROM_FORK)
+	((union task_union *) newTask)->stack[KERNEL_STACK_SIZE-16-3] = newTask->esp + 4; // EBP
+	
+	// Insert the process into the ready queue;
+	list_del(freeHead);
+	list_add_tail(&(newTask->list), &readyqueue);
+	
+	// Return child PID
+	return PID;
 }
 
 
