@@ -9,6 +9,7 @@
 #define	EINVAL		22	/* Invalid argument */
 #define	EFAULT		14	/* Bad address */
 #define	ENOMEM		12	/* Out of memory */
+#define	ESRCH		 3	/* No such process */
 
 // Estructuras
 extern char char_map[];
@@ -23,6 +24,7 @@ int sys_write(int fd, char * buffer, int size);
 int sys_getpid();
 int sys_gettime();
 int sys_fork();
+void sys_exit(void);
 
 // Uso externo
 void init_interrupt_handlers();

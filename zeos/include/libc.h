@@ -6,6 +6,11 @@
 #ifndef __LIBC_H__
 #define __LIBC_H__
 
+#define	EINVAL		22	/* Invalid argument */
+#define	EFAULT		14	/* Bad address */
+#define	ENOMEM		12	/* Out of memory */
+#define	ESRCH		 3	/* No such process */
+
 #include <stats.h>
 
 int errno;
@@ -23,5 +28,11 @@ int fork();
 void exit();
 
 int gettime();
+
+void perror();
+
+void exit(void);
+
+int get_stats(int pid, struct stats *t);
 
 #endif  /* __LIBC_H__ */

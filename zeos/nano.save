@@ -1,0 +1,48 @@
+user: formato del fichero elf32-i386 Desensamblado de la sección .text.main: 00100000 <main>:
+  100000: 8d 4c 24 04 lea 0x4(%esp),%ecx
+  100004: 83 e4 f0 and $0xfffffff0,%esp
+  100007: ff 71 fc pushl -0x4(%ecx)
+  10000a: 55 push %ebp
+  10000b: 89 e5 mov %esp,%ebp
+  10000d: 51 push %ecx
+  10000e: 83 ec 04 sub $0x4,%esp
+  100011: e8 64 06 00 00 call 10067a <runjp>
+  100016: eb fe jmp 100016 <main+0x16> Desensamblado de la sección .text: 00100020 <itoa>:
+  100020: 55 push %ebp
+  100021: 89 e5 mov %esp,%ebp
+  100023: 57 push %edi
+  100024: 56 push %esi
+  100025: 8b 75 08 mov 0x8(%ebp),%esi
+  100028: 53 push %ebx
+  100029: 8b 5d 0c mov 0xc(%ebp),%ebx
+  10002c: 83 fe 00 cmp $0x0,%esi
+  10002f: 74 77 je 1000a8 <itoa+0x88>
+  100031: b9 00 00 00 00 mov $0x0,%ecx
+  100036: 7e 7c jle 1000b4 <itoa+0x94>
+  100038: bf 67 66 66 66 mov $0x66666667,%edi
+  10003d: 8d 76 00 lea 0x0(%esi),%esi
+  100040: 89 f0 mov %esi,%eax
+  100042: f7 ef imul %edi
+  100044: 89 f0 mov %esi,%eax
+  100046: c1 f8 1f sar $0x1f,%eax
+  100049: c1 fa 02 sar $0x2,%edx
+  10004c: 29 c2 sub %eax,%edx
+  10004e: 8d 04 92 lea (%edx,%edx,4),%eax
+  100051: 01 c0 add %eax,%eax
+  100053: 29 c6 sub %eax,%esi
+  100055: 8d 46 30 lea 0x30(%esi),%eax
+  100058: 89 d6 mov %edx,%esi
+  10005a: 88 04 0b mov %al,(%ebx,%ecx,1)
+  10005d: 83 c1 01 add $0x1,%ecx
+  100060: 85 d2 test %edx,%edx
+  100062: 75 dc jne 100040 <itoa+0x20>
+  100064: 89 cf mov %ecx,%edi
+  100066: d1 ff sar %edi
+  100068: 74 4e je 1000b8 <itoa+0x98>
+  10006a: 8d 54 0b ff lea -0x1(%ebx,%ecx,1),%edx
+  10006e: 89 d8 mov %ebx,%eax
+  100070: 89 ce mov %ecx,%esi
+  100072: 01 df add %ebx,%edi
+  100074: 89 5d 0c mov %ebx,0xc(%ebp)
+  100077: 89 f6 mov %esi,%esi
+  100079:	

@@ -9,7 +9,10 @@
 #include <mm.h>
 #include <segment.h>
 
+char syscall_buffer[100];
+
 void keyboard_routine() {
+	stats_enter_kernel();
 	// ISR 33 - Key Press.
 	unsigned char input = inb(__DATA_PORT);
 	
@@ -25,29 +28,44 @@ void keyboard_routine() {
 		}
 	}
 
-	
+	stats_exit_kernel();
 	return;
 }
 
 void clock_routine() {
+	stats_enter_kernel();
 	zeos_ticks++;
 	zeos_show_clock();
 	schedule();
+	stats_exit_kernel();
 }
 
 int sys_write(int fd, char * buffer, int size) {
+	stats_enter_kernel();
 	// Check fd
 	int err = check_fd(fd, ESCRIPTURA);
 	if (err < 0) return err;
 	
 	// Check buffer address
 	if (buffer == NULL) return -EFAULT;
+	if (!access_ok(VERIFY_READ, buffer, size)) return -EFAULT;
 
 	// Check size
 	if (size < 0) return -EINVAL;
 
-	// UPDATE -> COPY TO USER WITH FIXED SIZE BUFFER !important
-	return sys_write_console(buffer, size);
+	// Copy small buffers and write them to console.
+	int rsize;
+	for(rsize = size; rsize >= 100; rsize -= 100) {
+		copy_from_user(buffer + (size - rsize), syscall_buffer, 100);
+		sys_write_console(syscall_buffer, 100);
+	}
+	if (rsize > 0) {
+		copy_from_user(buffer + (size - rsize), syscall_buffer, rsize);
+		sys_write_console(syscall_buffer, rsize);
+	}
+	
+	stats_exit_kernel();
+	return size;
 }
 
 int sys_getpid() {
@@ -63,6 +81,8 @@ int sys_ni_syscall() {
 }
 
 int sys_fork() {
+	stats_enter_kernel();
+	
 	int PID = get_new_pid();
 
 	// Try to create a new task_struct. If no free task structs, return error.
@@ -131,6 +151,9 @@ int sys_fork() {
 	// After copying, we have to assign a new PID
 	newTask->PID = PID;
 	
+	// Stats are being tracked.
+	newTask->status = STATUS_ALIVE;
+	
 	// Now, the ESP for the new process. We will set this in order to simulate a task_switch call.
 	// EBP <- @RET(RET_FROM_FORK) <- @RET(SYSCALL HANDLER) <- EXECUTION CONTEXT
 	newTask->esp = KERNEL_ESP((union task_union *) newTask) - sizeof(struct execution_context) - 12;
@@ -142,8 +165,41 @@ int sys_fork() {
 	list_del(freeHead);
 	list_add_tail(&(newTask->list), &readyqueue);
 	
+	// Init stats for process
+	init_stats(newTask);
+	
 	// Return child PID
+	stats_exit_kernel();
 	return PID;
+}
+
+void sys_exit() {
+	// Free memory.
+	free_user_pages(current());
+	// No podemos pedir stats.
+	current()->status = STATUS_DEAD;
+	// Free task_struct.
+	list_add_tail(&(current()->list), &freequeue);
+	// Scheduling
+	sched_next_rr();
+}
+
+int sys_getstats(int pid, struct stats *t) {
+	stats_enter_kernel();
+	// Check memory.
+	if (t == NULL) return -EFAULT;
+	if (!access_ok(VERIFY_WRITE, t, sizeof(struct stats))) return -EFAULT;
+	
+	// Check PID exists
+	if (pid < 0) return -EINVAL;
+	if (pid > PID_MAX) return -ESRCH;
+	struct stats * st = get_stats_pid(pid);
+	if (st == NULL) return -ESRCH;
+	
+	// stats and pid exists. Copy stats and return 0.
+	copy_to_user(st, t, sizeof(struct stats));
+	stats_exit_kernel();
+	return 0;
 }
 
 

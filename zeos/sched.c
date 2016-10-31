@@ -7,6 +7,7 @@
 #include <io.h>
 #include <list.h>
 #include <handlers.h>
+#include <utils.h>
 
 /**
  * Container for the Task array and 2 additional pages (the first and the last one)
@@ -72,8 +73,14 @@ void init_idle (void)
 	// Asignamos al task_struct el PID 0
 	new->PID = 0;
 	
+	// Status alive.
+	new->status = STATUS_ALIVE;
+	
 	// Asignamos un quantum de 1 para que el proceso no se quede en la cpu más de lo necesario.
 	set_quantum(new, 1);
+	
+	// Iniciamos estadisticas
+	init_stats(new);
 	
 	// Allocateamos una nueva página para el proceso.
 	allocate_DIR(new);
@@ -104,11 +111,18 @@ void init_task1(void)
 	// Asignamos al task_struct el PID 1
 	new->PID = 1;
 	
+	// Status alive.
+	new->status = STATUS_ALIVE;
+	
 	// Allocateamos una nueva página para el proceso.
 	allocate_DIR(new);
 	
 	// Configuramos sus páginas de código y datos
 	set_user_pages(new);
+	
+	// Reseteamos las estadísticas del proceso.
+	init_stats(new);
+	new->st.total_trans++;
 	
 	// Update del TSS para apuntar a la system stack de new
 	union task_union * t = (union task_union *) new;
@@ -131,6 +145,7 @@ void init_sched(){
 	int i;
 	for(i = 0; i < NR_TASKS; ++i) {
 		list_add_tail(&(task[i].task.list), &freequeue);
+		task[i].task.status = STATUS_DEAD;
 	}
 }
 
@@ -181,29 +196,32 @@ struct task_struct* current()
 void sched_next_rr() {
 	struct task_struct *next;
 	
-	if (current() != idle_task) update_process_state_rr(current(), &readyqueue);
-	
 	if (list_empty(&readyqueue)) next = idle_task;
 	else {
 		next = list_head_to_task_struct(list_first(&readyqueue));
 		update_process_state_rr(next, NULL);
+		stats_exit_ready(next);
 	}
 	
-	current_ticks_left = get_quantum(next);
+	current_ticks_left = next->quantum;
 	
-	task_switch(next);
+	task_switch((union task_union *) next);
 }
 
 void update_process_state_rr(struct task_struct *t, struct list_head *dest) {
 	if (t != current()) list_del(&(t->list));
 	if (dest != NULL) list_add_tail(&(t->list), dest);
+	else t->st.total_trans++;
 }
 
 int needs_sched_rr() {
 	// Si no queda quantum y no hay procesos esperando.
 	if (current_ticks_left <= 0) {
 		if (!list_empty(&readyqueue)) return 1;
-		else current_ticks_left = 1; // No hay procesos en cola, le damos un tick más.
+		else {
+			current_ticks_left = current()->quantum; // No hay procesos en cola, le damos un quantum más.
+			current()->st.total_trans++;
+		}
 	}
 	return 0;
 }
@@ -214,13 +232,71 @@ void update_sched_data_rr() {
 
 void schedule() {
 	update_sched_data_rr();
-	if (needs_sched_rr()) sched_next_rr();
+	if (needs_sched_rr()) {
+		if (current() != idle_task) {
+			update_process_state_rr(current(), &readyqueue);
+			stats_enter_ready();
+		}
+		sched_next_rr();
+	}
 }
 
 int get_quantum(struct task_struct *t) {
-	return t->quantum;
+	if (t == current()) return current_ticks_left;
+	else return t->quantum;
 }
 
 void set_quantum(struct task_struct *t, int new_quantum) {
 	t->quantum = new_quantum;
+	if (t == current()) current_ticks_left = new_quantum;
+}
+
+/* STATISTICAL INFORMATION */
+void init_stats(struct task_struct *t) {
+	t->st.user_ticks 			= 	0;
+	t->st.system_ticks 			= 	0;
+	t->st.blocked_ticks 		= 	0;
+	t->st.ready_ticks 			= 	0;
+	t->st.elapsed_total_ticks 	=  	get_ticks();
+	t->st.total_trans			= 	0;
+	t->st.remaining_ticks 		= 	0;
+}
+
+inline void stats_enter_kernel() {
+	struct task_struct *t = current();
+	t->st.user_ticks += get_ticks() - (t->st.elapsed_total_ticks);
+	t->st.elapsed_total_ticks = get_ticks();
+}
+
+inline void stats_exit_kernel() {
+	struct task_struct *t = current();
+	t->st.system_ticks += get_ticks() - (t->st.elapsed_total_ticks);
+	t->st.elapsed_total_ticks = get_ticks();
+}
+
+inline void stats_enter_ready() {
+	struct task_struct *t = current();
+	t->st.system_ticks += get_ticks() - (t->st.elapsed_total_ticks);
+	t->st.elapsed_total_ticks = get_ticks();
+}
+
+inline void stats_exit_ready(struct task_struct *t) {
+	t->st.ready_ticks += get_ticks() - (t->st.elapsed_total_ticks);
+	t->st.elapsed_total_ticks = get_ticks();
+}
+
+struct stats * get_stats_pid(int pid) {
+	if (current()->PID == pid) {
+		current()->st.remaining_ticks = current_ticks_left;
+		return &(current()->st);
+	}
+	
+	int i;
+	for (i = 0; i < NR_TASKS; ++i) {
+		if (task[i].task.PID == pid && task[i].task.status == STATUS_ALIVE) {
+			task[i].task.st.remaining_ticks = 0;
+			return &(task[i].task.st);
+		}
+	}
+	return NULL;
 }

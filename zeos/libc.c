@@ -105,4 +105,38 @@ int write(int fd, char *buffer, int size) {
 	return ret;
 }
 
+void pprint(char * s) {
+	write(1, s, strlen(s));
+}
 
+void perror() {
+	if (errno == EINVAL) pprint("Error: Invalid argument\n");
+	else if (errno == EFAULT) pprint("Error: Invalid memory address\n");
+	else if (errno == ENOMEM) pprint("Error: No memory availible\n");
+	else if (errno == ESRCH) pprint("Error: No such process\n");
+}
+
+int get_stats(int pid, struct stats *t) {
+		int ret;
+	
+	__asm__ __volatile__ ("movl $35, %%eax\n\t"
+						"int $0x80\n\t"
+						"movl %%eax, %0"
+						: "=r" (ret)
+						: "b" (pid), "c" (t)
+						: "eax");
+	
+	if (ret < 0) {
+		errno = ret*(-1);
+		return -1;
+	}
+	return ret;
+}
+
+void exit() {
+	__asm__ __volatile__ ("movl $1, %%eax\n\t"
+						"int $0x80"
+						: // No output
+						: // No input
+						: "eax");
+}

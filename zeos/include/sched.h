@@ -8,11 +8,15 @@
 #include <list.h>
 #include <types.h>
 #include <mm_address.h>
+#include <stats.h>
 
 #define NR_TASKS      10
 #define KERNEL_STACK_SIZE	1024
 #define PID_MAX 	32767
 #define DEFAULT_QUANTUM  20
+
+#define STATUS_DEAD 	0
+#define STATUS_ALIVE	1
 
 enum state_t { ST_RUN, ST_READY, ST_BLOCKED };
 
@@ -26,6 +30,8 @@ struct task_struct {
   struct list_head list;
   unsigned long esp;
   int quantum;
+  int status;
+  struct stats st;
 };
 
 
@@ -99,5 +105,14 @@ void set_quantum(struct task_struct *t, int new_quantum);
 void schedule(void);
 
 int current_ticks_left;
+
+/* STATS */
+
+void init_stats(struct task_struct *t);
+inline void stats_enter_kernel();
+inline void stats_exit_kernel();
+inline void stats_enter_ready();
+inline void stats_exit_ready(struct task_struct *t);
+struct stats * get_stats_pid(int pid);
 
 #endif  /* __SCHED_H__ */

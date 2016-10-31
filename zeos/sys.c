@@ -12,7 +12,3 @@
 #include <mm_address.h>
 
 #include <sched.h>
-
-void sys_exit()
-{  
-}
