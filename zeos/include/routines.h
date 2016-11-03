@@ -25,6 +25,7 @@ int sys_getpid();
 int sys_gettime();
 int sys_fork();
 void sys_exit(void);
+int sys_clone (void (*function)(void), void *stack);
 
 // Uso externo
 void init_interrupt_handlers();

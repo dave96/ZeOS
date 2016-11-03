@@ -117,7 +117,7 @@ void perror() {
 }
 
 int get_stats(int pid, struct stats *t) {
-		int ret;
+	int ret;
 	
 	__asm__ __volatile__ ("movl $35, %%eax\n\t"
 						"int $0x80\n\t"
@@ -139,4 +139,21 @@ void exit() {
 						: // No output
 						: // No input
 						: "eax");
+}
+
+int clone (void (*function)(void), void *stack) {
+	int ret;
+	
+	__asm__ __volatile__ ("movl $19, %%eax\n\t"
+						"int $0x80\n\t"
+						"movl %%eax, %0"
+						: "=r" (ret)
+						: "b" (function), "c" (stack)
+						: "eax");
+	
+	if (ret < 0) {
+		errno = ret*(-1);
+		return -1;
+	}
+	return ret;
 }

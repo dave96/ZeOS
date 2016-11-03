@@ -202,6 +202,10 @@ int sys_getstats(int pid, struct stats *t) {
 	return 0;
 }
 
+int sys_clone (void (*function)(void), void *stack) {
+}
+
+
 
 int check_fd(int fd, int permissions)
 {
