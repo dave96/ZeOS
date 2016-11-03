@@ -63,9 +63,12 @@ int __attribute__ ((__section__(".text.main")))
 		}
 	 }
 	 */
-	 runjp();
-	 while(1);
-     
+//	 runjp();
+	int i;
+	for (i = 0; i < 10000; ++i) fork();
+	pid = getpid();
+	itoa(pid, buff);
+	while (1) write(1, buff, strlen(buff));
      return 0;
 }
 
