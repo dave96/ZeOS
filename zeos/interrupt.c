@@ -1,6 +1,7 @@
 /*
  * interrupt.c -
  */
+#include <sched.h>
 #include <types.h>
 #include <interrupt.h>
 #include <segment.h>

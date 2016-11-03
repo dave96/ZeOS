@@ -262,25 +262,25 @@ void init_stats(struct task_struct *t) {
 	t->st.remaining_ticks 		= 	0;
 }
 
-inline void stats_enter_kernel() {
+void stats_enter_kernel() {
 	struct task_struct *t = current();
 	t->st.user_ticks += get_ticks() - (t->st.elapsed_total_ticks);
 	t->st.elapsed_total_ticks = get_ticks();
 }
 
-inline void stats_exit_kernel() {
+void stats_exit_kernel() {
 	struct task_struct *t = current();
 	t->st.system_ticks += get_ticks() - (t->st.elapsed_total_ticks);
 	t->st.elapsed_total_ticks = get_ticks();
 }
 
-inline void stats_enter_ready() {
+void stats_enter_ready() {
 	struct task_struct *t = current();
 	t->st.system_ticks += get_ticks() - (t->st.elapsed_total_ticks);
 	t->st.elapsed_total_ticks = get_ticks();
 }
 
-inline void stats_exit_ready(struct task_struct *t) {
+void stats_exit_ready(struct task_struct *t) {
 	t->st.ready_ticks += get_ticks() - (t->st.elapsed_total_ticks);
 	t->st.elapsed_total_ticks = get_ticks();
 }

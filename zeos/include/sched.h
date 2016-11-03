@@ -109,10 +109,10 @@ int current_ticks_left;
 /* STATS */
 
 void init_stats(struct task_struct *t);
-inline void stats_enter_kernel();
-inline void stats_exit_kernel();
-inline void stats_enter_ready();
-inline void stats_exit_ready(struct task_struct *t);
+void stats_enter_kernel();
+void stats_exit_kernel();
+void stats_enter_ready();
+void stats_exit_ready(struct task_struct *t);
 struct stats * get_stats_pid(int pid);
 
 #endif  /* __SCHED_H__ */
