@@ -12,7 +12,6 @@
 char syscall_buffer[100];
 
 void keyboard_routine() {
-	stats_enter_kernel();
 	// ISR 33 - Key Press.
 	unsigned char input = inb(__DATA_PORT);
 	
@@ -28,20 +27,16 @@ void keyboard_routine() {
 		}
 	}
 
-	stats_exit_kernel();
 	return;
 }
 
 void clock_routine() {
-	stats_enter_kernel();
 	zeos_ticks++;
 	zeos_show_clock();
 	schedule();
-	stats_exit_kernel();
 }
 
 int sys_write(int fd, char * buffer, int size) {
-	stats_enter_kernel();
 	// Check fd
 	int err = check_fd(fd, ESCRIPTURA);
 	if (err < 0) return err;
@@ -63,8 +58,6 @@ int sys_write(int fd, char * buffer, int size) {
 		copy_from_user(buffer + (size - rsize), syscall_buffer, rsize);
 		sys_write_console(syscall_buffer, rsize);
 	}
-	
-	stats_exit_kernel();
 	return size;
 }
 
@@ -80,9 +73,7 @@ int sys_ni_syscall() {
 	return -38; /*ENOSYS*/
 }
 
-int sys_fork() {
-	stats_enter_kernel();
-	
+int sys_fork() {	
 	int PID = get_new_pid();
 
 	// Try to create a new task_struct. If no free task structs, return error.
@@ -169,7 +160,6 @@ int sys_fork() {
 	init_stats(newTask);
 	
 	// Return child PID
-	stats_exit_kernel();
 	return PID;
 }
 
@@ -185,7 +175,6 @@ void sys_exit() {
 }
 
 int sys_getstats(int pid, struct stats *t) {
-	stats_enter_kernel();
 	// Check memory.
 	if (t == NULL) return -EFAULT;
 	if (!access_ok(VERIFY_WRITE, t, sizeof(struct stats))) return -EFAULT;
@@ -198,7 +187,6 @@ int sys_getstats(int pid, struct stats *t) {
 	
 	// stats and pid exists. Copy stats and return 0.
 	copy_to_user(st, t, sizeof(struct stats));
-	stats_exit_kernel();
 	return 0;
 }
 
