@@ -29,7 +29,7 @@ int get_new_pid(void);
 
 struct semaphore {
 	struct task_struct * owner;
-	int counter;
+	unsigned int counter;
 	struct list_head blocked;
 };
 

@@ -10,6 +10,9 @@
 #define	EFAULT		14	/* Bad address */
 #define	ENOMEM		12	/* Out of memory */
 #define	ESRCH		 3	/* No such process */
+#define	EAGAIN		11	/* Try again */
+#define	EBUSY		16	/* Device or resource busy */
+#define	EPERM		 1	/* Operation not permitted */
 
 // Estructuras
 extern char char_map[];

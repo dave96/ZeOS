@@ -178,6 +178,11 @@ void sys_exit() {
 	if (--*(get_DIR_alloc(current())) == 0)	free_user_pages(current());
 	// No podemos pedir stats.
 	current()->status = STATUS_DEAD;
+	
+	// Check semaphores.
+	int i;
+	for (i = 0; i < SEM_MAX_NUM; ++i) if (sem_array[i].owner == current()) sys_sem_destroy(i);
+	
 	// Free task_struct.
 	list_add_tail(&(current()->list), &freequeue);
 	// Scheduling
@@ -262,16 +267,56 @@ int sys_clone (void (*function)(void), void *stack) {
 }
 
 int sys_sem_init (int n_sem, unsigned int value) {
+	if (n_sem < 0 || n_sem >= SEM_MAX_NUM) return -EINVAL; // Invalid n_sem.
+	if (sem_array[n_sem].owner != NULL) return -EBUSY; // Try again, semaphone unavailible.
 	
+	sem_array[n_sem].owner = current();
+	sem_array[n_sem].counter = value;
+	return 0;
 }
 
 int sys_sem_wait (int n_sem) {
+	if (n_sem < 0 || n_sem >= SEM_MAX_NUM) return -EINVAL; // Invalid n_sem.
+	if (sem_array[n_sem].owner == NULL) return -EINVAL; // Semaphore is not initialized.
+	
+	if (sem_array[n_sem].counter == 0) { // Block process
+		update_process_state_rr(current(), &sem_array[n_sem].blocked);
+		sched_next_rr();
+		// Now, return point.
+		if (sem_array[n_sem].owner == NULL) return -1; // Semaphore destroyed while blocked!
+		return 0; // Correct execution, we were unblocked.
+	} else {
+		sem_array[n_sem].counter--;
+		return 0;
+	}
 }
 
 int sys_sem_signal (int n_sem) {
+	if (n_sem < 0 || n_sem >= SEM_MAX_NUM) return -EINVAL; // Invalid n_sem.
+	if (sem_array[n_sem].owner == NULL) return -EINVAL; // Semaphore is not initialized.
+	
+	if (sem_array[n_sem].counter == 0) { // Unblock process
+		if (!list_empty(&sem_array[n_sem].blocked)) 
+			update_process_state_rr(list_head_to_task_struct(list_first(&sem_array[n_sem].blocked)), &readyqueue);
+	} else { // Increment counter
+		sem_array[n_sem].counter++;
+	}
+	return 0;
 }
 
 int sys_sem_destroy (int n_sem) {
+	if (n_sem < 0 || n_sem >= SEM_MAX_NUM) return -EINVAL; // Invalid n_sem.
+	if (sem_array[n_sem].owner != current()) return -EPERM; // Semaphore is not owned by calling process.
+	
+	sem_array[n_sem].owner = NULL;
+	
+	struct list_head * it;
+	
+	list_for_each(it, &sem_array[n_sem].blocked) {
+		update_process_state_rr(list_head_to_task_struct(it), &readyqueue);
+	}
+
+	return 0;
 }
 
 int check_fd(int fd, int permissions)
