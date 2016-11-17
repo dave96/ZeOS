@@ -96,6 +96,7 @@ void inner_task_switch(union task_union*t);
 struct task_struct *list_head_to_task_struct(struct list_head *l);
 
 int allocate_DIR(struct task_struct *t);
+void unallocate_DIR(struct task_struct *t);
 
 int get_current_pid();
 

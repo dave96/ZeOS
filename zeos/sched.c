@@ -33,7 +33,7 @@ page_table_entry * get_DIR (struct task_struct *t)
 }
 
 int * get_DIR_alloc(struct task_struct *t) {
-	int pos = (t->dir_pages_baseAddr - &dir_pages[0][0])/sizeof(page_table_entry);
+	int pos = ((t->dir_pages_baseAddr - &dir_pages[0][0])/(sizeof(page_table_entry) * TOTAL_PAGES));
 	return &dir_alloc[pos];
 }
 
@@ -52,6 +52,10 @@ int locate_free_DIR() {
 		}
 	}
 	return -1;
+}
+
+void unallocate_DIR(struct task_struct *t) {
+	--*(get_DIR_alloc(t));
 }
 
 int allocate_DIR(struct task_struct *t) 

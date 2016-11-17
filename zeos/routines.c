@@ -117,6 +117,7 @@ int sys_fork() {
 	user_pages[pg] = alloc_frame();
 		if (user_pages[pg] < 0) {
 			for(pg = pg-1; pg >= 0; --pg) free_frame(user_pages[pg]);
+			unallocate_DIR(newTask);
 			return -ENOMEM;
 		}
 	}
@@ -306,15 +307,13 @@ int sys_sem_signal (int n_sem) {
 
 int sys_sem_destroy (int n_sem) {
 	if (n_sem < 0 || n_sem >= SEM_MAX_NUM) return -EINVAL; // Invalid n_sem.
+	if (sem_array[n_sem].owner == NULL) return -EINVAL; // Semaphore is not initialized.
 	if (sem_array[n_sem].owner != current()) return -EPERM; // Semaphore is not owned by calling process.
 	
+	while(!list_empty(&sem_array[n_sem].blocked))
+		update_process_state_rr(list_head_to_task_struct(list_first(&sem_array[n_sem].blocked)), &readyqueue);
+
 	sem_array[n_sem].owner = NULL;
-	
-	struct list_head * it;
-	
-	list_for_each(it, &sem_array[n_sem].blocked) {
-		update_process_state_rr(list_head_to_task_struct(it), &readyqueue);
-	}
 
 	return 0;
 }
