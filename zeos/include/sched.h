@@ -14,6 +14,7 @@
 #define KERNEL_STACK_SIZE	1024
 #define PID_MAX 	32767
 #define DEFAULT_QUANTUM  20
+#define SEM_MAX_NUM		20
 
 #define STATUS_DEAD 	0
 #define STATUS_ALIVE	1
@@ -22,7 +23,15 @@ enum state_t { ST_RUN, ST_READY, ST_BLOCKED };
 
 int current_pid;
 
+int dir_alloc[NR_TASKS];
+
 int get_new_pid(void);
+
+struct semaphore {
+	struct task_struct * owner;
+	int counter;
+	struct list_head blocked;
+};
 
 struct task_struct {
   int PID;			/* Process ID. This MUST be the first field of the struct. */
@@ -65,6 +74,8 @@ struct task_struct *idle_task;
 
 struct list_head freequeue;
 struct list_head readyqueue;
+
+struct semaphore sem_array[SEM_MAX_NUM];
 
 
 #define KERNEL_ESP(t)       	(DWord) &(t)->stack[KERNEL_STACK_SIZE]
@@ -114,5 +125,8 @@ void stats_exit_kernel();
 void stats_enter_ready();
 void stats_exit_ready(struct task_struct *t);
 struct stats * get_stats_pid(int pid);
+
+
+int * get_DIR_alloc(struct task_struct *t);
 
 #endif  /* __SCHED_H__ */

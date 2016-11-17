@@ -133,6 +133,74 @@ int get_stats(int pid, struct stats *t) {
 	return ret;
 }
 
+int sem_init (int n_sem, unsigned int value) {
+	int ret;
+	
+	__asm__ __volatile__ ("movl $21, %%eax\n\t"
+						"int $0x80\n\t"
+						"movl %%eax, %0"
+						: "=r" (ret)
+						: "b" (n_sem), "c" (value)
+						: "eax");
+	
+	if (ret < 0) {
+		errno = ret*(-1);
+		return -1;
+	}
+	return ret;
+}
+
+int sem_wait (int n_sem) {
+	int ret;
+	
+	__asm__ __volatile__ ("movl $22, %%eax\n\t"
+						"int $0x80\n\t"
+						"movl %%eax, %0"
+						: "=r" (ret)
+						: "b" (n_sem)
+						: "eax");
+	
+	if (ret < 0) {
+		errno = ret*(-1);
+		return -1;
+	}
+	return ret;
+}
+
+int sem_signal (int n_sem) {
+	int ret;
+	
+	__asm__ __volatile__ ("movl $23, %%eax\n\t"
+						"int $0x80\n\t"
+						"movl %%eax, %0"
+						: "=r" (ret)
+						: "b" (n_sem)
+						: "eax");
+	
+	if (ret < 0) {
+		errno = ret*(-1);
+		return -1;
+	}
+	return ret;
+}
+
+int sem_destroy (int n_sem) {
+	int ret;
+	
+	__asm__ __volatile__ ("movl $24, %%eax\n\t"
+						"int $0x80\n\t"
+						"movl %%eax, %0"
+						: "=r" (ret)
+						: "b" (n_sem)
+						: "eax");
+	
+	if (ret < 0) {
+		errno = ret*(-1);
+		return -1;
+	}
+	return ret;
+}
+
 void exit() {
 	__asm__ __volatile__ ("movl $1, %%eax\n\t"
 						"int $0x80"

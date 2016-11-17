@@ -32,17 +32,31 @@ page_table_entry * get_DIR (struct task_struct *t)
 	return t->dir_pages_baseAddr;
 }
 
+int * get_DIR_alloc(struct task_struct *t) {
+	int pos = (t->dir_pages_baseAddr - &dir_pages[0][0])/sizeof(page_table_entry);
+	return &dir_alloc[pos];
+}
+
 /* get_PT - Returns the Page Table address for task 't' */
 page_table_entry * get_PT (struct task_struct *t) 
 {
 	return (page_table_entry *)(((unsigned int)(t->dir_pages_baseAddr->bits.pbase_addr))<<12);
 }
 
+int locate_free_DIR() {
+	int i;
+	for (i = 0; i < NR_TASKS; ++i) {
+		if (dir_alloc[i] == 0) {
+			dir_alloc[i]++;
+			return i;
+		}
+	}
+	return -1;
+}
+
 int allocate_DIR(struct task_struct *t) 
 {
-	int pos;
-
-	pos = ((int)t-(int)task)/sizeof(union task_union);
+	int pos = locate_free_DIR();
 
 	t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[pos]; 
 
@@ -134,6 +148,8 @@ void init_task1(void)
 
 
 void init_sched(){
+	printk("Init scheduling...\n");
+	
 	// Init list_head structures for queues.
 	INIT_LIST_HEAD(&freequeue);
 	INIT_LIST_HEAD(&readyqueue);
@@ -146,6 +162,13 @@ void init_sched(){
 	for(i = 0; i < NR_TASKS; ++i) {
 		list_add_tail(&(task[i].task.list), &freequeue);
 		task[i].task.status = STATUS_DEAD;
+		dir_alloc[i] = 0;
+	}
+	
+	for(i = 0; i < SEM_MAX_NUM; ++i) {
+		sem_array[i].owner = NULL;
+		sem_array[i].counter = 0;
+		INIT_LIST_HEAD(&sem_array[i].blocked);
 	}
 }
 

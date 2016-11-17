@@ -174,8 +174,8 @@ int sys_fork() {
 }
 
 void sys_exit() {
-	// Free memory.
-	free_user_pages(current());
+	// Free memory if dir empty.
+	if (--*(get_DIR_alloc(current())) == 0)	free_user_pages(current());
 	// No podemos pedir stats.
 	current()->status = STATUS_DEAD;
 	// Free task_struct.
@@ -203,9 +203,76 @@ int sys_getstats(int pid, struct stats *t) {
 }
 
 int sys_clone (void (*function)(void), void *stack) {
+	int PID = get_new_pid();
+
+	// Try to create a new task_struct. If no free task structs, return error.
+
+	if (list_empty(&freequeue)) return -ENOMEM;
+	
+	// Check if stack is a valid location, and if function is inside the code area.
+	
+	if (!access_ok(VERIFY_WRITE, stack, 4)) return -EINVAL;
+	if (!access_ok(VERIFY_READ, function, 4)) return -EINVAL;
+
+	// There are availible task structs. We will only remove it from the list if we can allocate memory later.
+
+	struct list_head *freeHead = list_first(&freequeue);
+	struct task_struct *newTask = list_head_to_task_struct(freeHead);
+	
+	struct list_head anchor = newTask->list;
+
+	// Copy the parent task_union to the child.
+
+	copy_data(current(), newTask, KERNEL_STACK_SIZE*4);
+	
+	// Restore list anchor!
+	
+	newTask->list = anchor;
+
+	// No copying or allocation is done, as both of them share pages.
+	++*(get_DIR_alloc(current()));
+	
+	// After copying, we have to assign a new PID
+	newTask->PID = PID;
+	
+	// Stats are being tracked.
+	newTask->status = STATUS_ALIVE;
+	
+	// Now, the ESP for the new process. We will set this in order to simulate a task_switch call.
+	// EBP <- @RET(RET_FROM_FORK) <- @RET(SYSCALL HANDLER) <- EXECUTION CONTEXT
+	newTask->esp = KERNEL_ESP((union task_union *) newTask) - sizeof(struct execution_context) - 12;
+	
+	((union task_union *) newTask)->stack[KERNEL_STACK_SIZE-16-2] = (unsigned long) &ret_from_fork; // @RET(RET_FROM_FORK)
+	((union task_union *) newTask)->stack[KERNEL_STACK_SIZE-16-3] = newTask->esp + 4; // EBP
+	
+	// Now, set the CHILD ESP to point to the correct position, as specified in arguments
+	
+	((union task_union *) newTask)->stack[KERNEL_STACK_SIZE-2] = (DWord) stack; // ESP
+	((union task_union *) newTask)->stack[KERNEL_STACK_SIZE-5] = (DWord) function; //EIP
+	
+	// Insert the process into the ready queue;
+	list_del(freeHead);
+	list_add_tail(&(newTask->list), &readyqueue);
+	
+	// Init stats for process
+	init_stats(newTask);
+	
+	// Return thread PID
+	return PID;
 }
 
+int sys_sem_init (int n_sem, unsigned int value) {
+	
+}
 
+int sys_sem_wait (int n_sem) {
+}
+
+int sys_sem_signal (int n_sem) {
+}
+
+int sys_sem_destroy (int n_sem) {
+}
 
 int check_fd(int fd, int permissions)
 {

@@ -26,6 +26,10 @@ int sys_gettime();
 int sys_fork();
 void sys_exit(void);
 int sys_clone (void (*function)(void), void *stack);
+int sys_sem_init (int n_sem, unsigned int value);
+int sys_sem_wait (int n_sem);
+int sys_sem_signal (int n_sem);
+int sys_sem_destroy (int n_sem);
 
 // Uso externo
 void init_interrupt_handlers();

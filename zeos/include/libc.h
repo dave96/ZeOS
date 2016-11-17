@@ -35,4 +35,16 @@ void exit(void);
 
 int get_stats(int pid, struct stats *t);
 
+void pprint(char * s);
+
+int clone (void (*function)(void), void *stack);
+
+int sem_init (int n_sem, unsigned int value);
+
+int sem_wait (int n_sem);
+
+int sem_signal (int n_sem);
+
+int sem_destroy (int n_sem);
+
 #endif  /* __LIBC_H__ */

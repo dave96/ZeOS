@@ -1,7 +1,7 @@
 #include <libc.h>
 #include <stats.h>
 
-char buff[24];
+char buff[200];
 
 int pid;
 
@@ -35,41 +35,25 @@ long outer(long count) {
 }
 */
 
+void print_something() {
+	pprint("Soy el hijo!!\n");
+	exit();
+}
+
 int __attribute__ ((__section__(".text.main")))
   main(void)
 {
     /* Next line, tries to move value 0 to CR3 register. This register is a privileged one, and so it will raise an exception */
      /* __asm__ __volatile__ ("mov %0, %%cr3"::"r" (0) ); */
-     //runjp_rank(6, 31);
-     /*int i;
-     for(i = 0; i < 2; ++i) fork();
-     itoa(getpid(), buff);
-     int size = strlen(buff);
-     
-     while(1) {
-		 
-		 write(1, buff, size);
-	 }*/
-	 /*
-	 int a = fork();
-	 
-	 if (a > 0) {
-		 struct stats s;
-		 int r = get_stats(a, &s);
-		 if (r < 0) perror();
-		 else { 
-			 itoa(s.elapsed_total_ticks, &buff);
-			 write(1, &buff, strlen(&buff));
-		}
-	 }
-	 */
-//	 runjp();
-	int i;
-	for (i = 0; i < 10000; ++i) fork();
-	pid = getpid();
-	itoa(pid, buff);
-	while (1) write(1, buff, strlen(buff));
-     return 0;
+	 runjp();
+	/*int pid = clone(print_something, buff);
+	
+	if (pid < 0) perror();
+	else pprint("Éxito!\n");
+	while(1);
+	return 0;
+	* */
+	while(1);
 }
 
 
