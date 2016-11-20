@@ -43,19 +43,26 @@
 ENTRY(keyboard_handler)
 	SAVE_ALL
 	EOI
+	call	stats_enter_kernel
 	call 	keyboard_routine
+	call	stats_exit_kernel
 	RESTORE_ALL
 	iret
 	
 ENTRY(clock_handler)
 	SAVE_ALL
 	EOI
+	call	stats_enter_kernel
 	call	clock_routine
+	call	stats_exit_kernel
 	RESTORE_ALL
 	iret
 	
 ENTRY(system_call_handler)
 	SAVE_ALL
+	pushl	%eax
+	call 	stats_enter_kernel
+	popl	%eax
 	cmpl	$0, %eax
 	jl		error
 	cmp		$MAX_SYSCALL, %eax
@@ -66,6 +73,7 @@ error:
 	movl $-ENOSYS,	%eax
 fin:
 	movl %eax, 24(%esp)
+	call 	stats_exit_kernel
 	RESTORE_ALL
 	iret
 
