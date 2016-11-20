@@ -268,7 +268,7 @@ int sys_clone (void (*function)(void), void *stack) {
 
 int sys_sem_init (int n_sem, unsigned int value) {
 	if (n_sem < 0 || n_sem >= SEM_MAX_NUM) return -EINVAL; // Invalid n_sem.
-	if (sem_array[n_sem].owner != NULL) return -EBUSY; // Try again, semaphone unavailible.
+	if (sem_array[n_sem].owner != NULL) return -EBUSY; // Try again, semaphore unavailible.
 	
 	sem_array[n_sem].owner = current();
 	sem_array[n_sem].counter = value;
