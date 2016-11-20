@@ -32,11 +32,6 @@ page_table_entry * get_DIR (struct task_struct *t)
 	return t->dir_pages_baseAddr;
 }
 
-int * get_DIR_alloc(struct task_struct *t) {
-	int pos = ((t->dir_pages_baseAddr - &dir_pages[0][0])/(sizeof(page_table_entry) * TOTAL_PAGES));
-	return &dir_alloc[pos];
-}
-
 /* get_PT - Returns the Page Table address for task 't' */
 page_table_entry * get_PT (struct task_struct *t) 
 {
@@ -58,9 +53,18 @@ void unallocate_DIR(struct task_struct *t) {
 	*(get_DIR_alloc(t)) = *(get_DIR_alloc(t)) - 1;
 }
 
+void decr_DIR(struct task_struct *t) {
+	--dir_alloc[t->dir_pos];
+	if (dir_alloc[t->dir_pos] == 0) free_user_pages(t);
+}
+
+void incr_DIR(struct task_struct *t) {
+	++dir_alloc[t->dir_pos];
+}
+
 int allocate_DIR(struct task_struct *t) 
 {
-	int pos = locate_free_DIR();
+	t->dir_pos = locate_free_DIR();
 
 	t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[pos]; 
 

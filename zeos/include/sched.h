@@ -40,6 +40,7 @@ struct task_struct {
   unsigned long esp;
   int quantum;
   int status;
+  int dir_pos;
   struct stats st;
 };
 
@@ -96,7 +97,6 @@ void inner_task_switch(union task_union*t);
 struct task_struct *list_head_to_task_struct(struct list_head *l);
 
 int allocate_DIR(struct task_struct *t);
-void unallocate_DIR(struct task_struct *t);
 
 int get_current_pid();
 
@@ -128,6 +128,7 @@ void stats_exit_ready(struct task_struct *t);
 struct stats * get_stats_pid(int pid);
 
 
-int * get_DIR_alloc(struct task_struct *t);
+void incr_DIR(struct task_struct *t);
+void decr_DIR(struct task_struct *t);
 
 #endif  /* __SCHED_H__ */
