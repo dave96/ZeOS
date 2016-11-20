@@ -55,7 +55,7 @@ int locate_free_DIR() {
 }
 
 void unallocate_DIR(struct task_struct *t) {
-	--*(get_DIR_alloc(t));
+	*(get_DIR_alloc(t)) = *(get_DIR_alloc(t)) - 1;
 }
 
 int allocate_DIR(struct task_struct *t) 

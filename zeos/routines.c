@@ -176,7 +176,8 @@ int sys_fork() {
 
 void sys_exit() {
 	// Free memory if dir empty.
-	if (--*(get_DIR_alloc(current())) == 0)	free_user_pages(current());
+	unallocate_DIR(current());
+	if (*(get_DIR_alloc(current())) == 0) free_user_pages(current());
 	// No podemos pedir stats.
 	current()->status = STATUS_DEAD;
 	
@@ -236,7 +237,7 @@ int sys_clone (void (*function)(void), void *stack) {
 	newTask->list = anchor;
 
 	// No copying or allocation is done, as both of them share pages.
-	++*(get_DIR_alloc(current()));
+	++ *(get_DIR_alloc(current()));
 	
 	// After copying, we have to assign a new PID
 	newTask->PID = PID;
