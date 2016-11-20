@@ -49,10 +49,6 @@ int locate_free_DIR() {
 	return -1;
 }
 
-void unallocate_DIR(struct task_struct *t) {
-	*(get_DIR_alloc(t)) = *(get_DIR_alloc(t)) - 1;
-}
-
 void decr_DIR(struct task_struct *t) {
 	--dir_alloc[t->dir_pos];
 	if (dir_alloc[t->dir_pos] == 0) free_user_pages(t);
@@ -66,7 +62,7 @@ int allocate_DIR(struct task_struct *t)
 {
 	t->dir_pos = locate_free_DIR();
 
-	t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[pos]; 
+	t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[t->dir_pos]; 
 
 	return 1;
 }
@@ -76,10 +72,12 @@ int allocate_DIR(struct task_struct *t)
 void cpu_idle(void)
 {
 	__asm__ __volatile__("sti": : :"memory");
+	
+	printk("CPU Idle\n");
 
 	while(1)
 	{
-		printc('0' + (char) current()->PID);
+		// 
 	}
 }
 
