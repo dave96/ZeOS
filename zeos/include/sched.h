@@ -28,19 +28,19 @@ int dir_alloc[NR_TASKS];
 int get_new_pid(void);
 
 struct semaphore {
-	struct task_struct * owner;
+	struct task_struct * owner; /* Anchor to owner TASK_STRUCT base address */
 	unsigned int counter;
 	struct list_head blocked;
 };
 
 struct task_struct {
   int PID;			/* Process ID. This MUST be the first field of the struct. */
-  page_table_entry * dir_pages_baseAddr;
-  struct list_head list;
-  unsigned long esp;
-  int quantum;
-  int status;
-  struct stats st;
+  page_table_entry * dir_pages_baseAddr; /* Page directory address */
+  struct list_head list; /* List anchor for blocked, ready and free queues */
+  unsigned long esp; /* Process kernel stack pointer to restore on context switch */
+  int quantum; /* Scheduling variable */
+  int status; /* ALIVE/DEAD */
+  struct stats st; /* Info for get_stats syscall */
 };
 
 
@@ -49,6 +49,7 @@ union task_union {
   unsigned long stack[KERNEL_STACK_SIZE];    /* pila de sistema, per procés */
 };
 
+/* This structure is used for sizeof() type macros and can be used to map process execution context in the kernel stack */
 struct execution_context {
 	DWord ebx;
 	DWord ecx;
@@ -127,7 +128,7 @@ void stats_enter_ready();
 void stats_exit_ready(struct task_struct *t);
 struct stats * get_stats_pid(int pid);
 
-
+/* DIR manipulation */
 void incr_DIR(struct task_struct *t);
 void decr_DIR(struct task_struct *t);
 

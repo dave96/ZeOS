@@ -171,6 +171,7 @@ void init_sched(){
 		dir_alloc[i] = 0;
 	}
 	
+	// Initialize semaphores to 0. Redundant?
 	for(i = 0; i < SEM_MAX_NUM; ++i) {
 		sem_array[i].owner = NULL;
 		sem_array[i].counter = 0;
@@ -178,6 +179,8 @@ void init_sched(){
 	}
 }
 
+
+/* Obtain new PID. Control for duplicated pids? */
 int get_new_pid(void) {
 	if (current_pid == PID_MAX) current_pid = 2;
 	else current_pid++;
