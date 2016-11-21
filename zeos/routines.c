@@ -110,7 +110,9 @@ int sys_fork() {
 	for (pg = 0; pg < NUM_PAG_DATA; ++pg) {
 	user_pages[pg] = alloc_frame();
 		if (user_pages[pg] < 0) {
-			decr_DIR(newTask);
+			int i;
+			for (i = 0; i < pg; ++i) free_frame(i);
+			--dir_alloc[newTask->dir_pos];
 			list_add_tail(freeHead, &freequeue);
 			return -ENOMEM;
 		}
@@ -231,7 +233,7 @@ int sys_clone (void (*function)(void), void *stack) {
 	// After copying, we have to assign a new PID
 	newTask->PID = PID;
 	
-	// Stats are being tracked.
+	// Stats are being tracked. This is kind of redundant.
 	newTask->status = STATUS_ALIVE;
 	
 	// Now, the ESP for the new process. We will set this in order to simulate a task_switch call.
