@@ -50,19 +50,19 @@ int locate_free_DIR() {
 }
 
 void decr_DIR(struct task_struct *t) {
-	--dir_alloc[t->dir_pos];
-	if (dir_alloc[t->dir_pos] == 0) free_user_pages(t);
+	--dir_alloc[DIR_POS(t)];
+	if (dir_alloc[DIR_POS(t)] == 0) free_user_pages(t);
 }
 
 void incr_DIR(struct task_struct *t) {
-	++dir_alloc[t->dir_pos];
+	++dir_alloc[DIR_POS(t)];
 }
 
 int allocate_DIR(struct task_struct *t) 
 {
-	t->dir_pos = locate_free_DIR();
+	int pos = locate_free_DIR();
 
-	t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[t->dir_pos]; 
+	t->dir_pages_baseAddr = (page_table_entry*) &dir_pages[pos]; 
 
 	return 1;
 }

@@ -112,7 +112,7 @@ int sys_fork() {
 		if (user_pages[pg] < 0) {
 			int i;
 			for (i = 0; i < pg; ++i) free_frame(i);
-			--dir_alloc[newTask->dir_pos];
+			--dir_alloc[DIR_POS(newTask)];
 			list_add_tail(freeHead, &freequeue);
 			return -ENOMEM;
 		}

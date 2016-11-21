@@ -40,7 +40,6 @@ struct task_struct {
   unsigned long esp;
   int quantum;
   int status;
-  int dir_pos;
   struct stats st;
 };
 
@@ -80,6 +79,7 @@ struct semaphore sem_array[SEM_MAX_NUM];
 
 
 #define KERNEL_ESP(t)       	(DWord) &(t)->stack[KERNEL_STACK_SIZE]
+#define DIR_POS(t)				(int) ((((int) t->dir_pages_baseAddr) - ((int) &dir_pages[0])) / sizeof(dir_pages[0]))
 
 #define INITIAL_ESP       	KERNEL_ESP(&task[1])
 
