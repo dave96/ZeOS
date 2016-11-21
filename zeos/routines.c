@@ -286,8 +286,7 @@ int sys_sem_signal (int n_sem) {
 	if (n_sem < 0 || n_sem >= SEM_MAX_NUM) return -EINVAL; // Invalid n_sem.
 	if (sem_array[n_sem].owner == NULL) return -EINVAL; // Semaphore is not initialized.
 	
-	if (sem_array[n_sem].counter == 0) { // Unblock process
-		if (!list_empty(&sem_array[n_sem].blocked)) 
+	if (!list_empty(&sem_array[n_sem].blocked)) { // Unblock process
 			update_process_state_rr(list_head_to_task_struct(list_first(&sem_array[n_sem].blocked)), &readyqueue);
 	} else { // Increment counter
 		sem_array[n_sem].counter++;
