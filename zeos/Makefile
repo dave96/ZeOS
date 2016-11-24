@@ -26,7 +26,7 @@ SYSLDFLAGS = -T system.lds
 USRLDFLAGS = -T user.lds
 LINKFLAGS = -g
 
-SYSOBJ = interrupt.o entry.o sys_call_table.o io.o sched.o sys.o mm.o devices.o utils.o hardware.o list.o handlers.o routines.o libauxjp.a
+SYSOBJ = interrupt.o fifo.o entry.o sys_call_table.o io.o sched.o sys.o mm.o devices.o utils.o hardware.o list.o handlers.o routines.o libauxjp.a
 
 LIBZEOS = -L . -l zeos -l auxjp
 
@@ -81,7 +81,9 @@ sys.o:sys.c $(INCLUDEDIR)/devices.h
 
 utils.o:utils.c $(INCLUDEDIR)/utils.h
 
-routines.o:routines.c $(INCLUDEDIR)/routines.h
+routines.o:routines.c $(INCLUDEDIR)/routines.h $(INCLUDEDIR)/fifo.h
+
+fifo.o: fifo.c $(INCLUDEDIR)/fifo.h
 
 system.o:system.c $(INCLUDEDIR)/hardware.h system.lds $(SYSOBJ) $(INCLUDEDIR)/handlers.h $(INCLUDEDIR)/segment.h $(INCLUDEDIR)/types.h $(INCLUDEDIR)/interrupt.h $(INCLUDEDIR)/system.h $(INCLUDEDIR)/sched.h $(INCLUDEDIR)/mm.h $(INCLUDEDIR)/io.h $(INCLUDEDIR)/mm_address.h 
 

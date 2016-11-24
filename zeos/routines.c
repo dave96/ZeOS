@@ -8,8 +8,13 @@
 #include <utils.h>
 #include <mm.h>
 #include <segment.h>
+#include <fifo.h>
 
-char syscall_buffer[100];
+#define  KERNEL_BUFFER_SIZE  100
+
+char syscall_buffer[KERNEL_BUFFER_SIZE];
+
+/* Service routines */
 
 void keyboard_routine() {
 	// ISR 33 - Key Press.
@@ -21,10 +26,21 @@ void keyboard_routine() {
 		
 		char input_char = char_map[input];
 		if (input_char != '\0') {
-			printc_xy(0, 0, input_char);
+			fifo_write(&keybuffer, input_char);
 		} else {
-			printc_xy(0, 0, 'C');
+			fifo_write(&keybuffer, 'C');
 		}
+		
+		
+		
+		if(!list_empty(&keyboardqueue)) {
+			// We have processes waiting for I/O
+			if (fifo_full(keybuffer))
+				unblock(list_head_to_task_struct(list_first(&keyboardqueue)));
+			else if (--list_head_to_task_struct(list_first(&keyboardqueue))->blocked_count == 0) 
+				unblock(list_head_to_task_struct(list_first(&keyboardqueue)));
+		}
+		
 	}
 
 	return;
@@ -35,6 +51,8 @@ void clock_routine() {
 	zeos_show_clock();
 	schedule();
 }
+
+/* I/O */
 
 int sys_write(int fd, char * buffer, int size) {
 	// Check fd
@@ -50,9 +68,9 @@ int sys_write(int fd, char * buffer, int size) {
 
 	// Copy small buffers and write them to console.
 	int rsize;
-	for(rsize = size; rsize >= 100; rsize -= 100) {
-		copy_from_user(buffer + (size - rsize), syscall_buffer, 100);
-		sys_write_console(syscall_buffer, 100);
+	for(rsize = size; rsize >= KERNEL_BUFFER_SIZE; rsize -= KERNEL_BUFFER_SIZE) {
+		copy_from_user(buffer + (size - rsize), syscall_buffer, KERNEL_BUFFER_SIZE);
+		sys_write_console(syscall_buffer, KERNEL_BUFFER_SIZE);
 	}
 	if (rsize > 0) {
 		copy_from_user(buffer + (size - rsize), syscall_buffer, rsize);
@@ -60,6 +78,51 @@ int sys_write(int fd, char * buffer, int size) {
 	}
 	return size;
 }
+
+int sys_read (int fd, char *buffer, int count) {
+	// Check fd
+	int err = check_fd(fd, LECTURA);
+	if (err < 0) return err;
+	
+	// Check buffer address
+	if (buffer == NULL) return -EFAULT;
+	if (!access_ok(VERIFY_WRITE, buffer, count)) return -EFAULT;
+	
+	// Check count
+	if (count < 0) return -EINVAL;
+	if (count == 0) return 0;
+	
+	// If buffer empty, we don't care if there are processes in queue or not,
+	// and in processes in queue, buffer will be empty, so that's the condition
+	// for blocking.
+	int rest = count;
+	
+	if (!list_empty(&keyboardqueue)) {
+		current()->blocked_count = rest;
+		block(current());
+	}
+	
+	int i;
+	while (rest > 0) {
+		if (fifo_empty(keybuffer)) {
+			current()->blocked_count = rest;
+			// We have to block the process at the START of the queue.
+			list_add(&current()->list, &keyboardqueue);
+			sched_next_rr();
+		}
+		
+		for (i = 0; i < KERNEL_BUFFER_SIZE && i <= rest && !(fifo_empty(keybuffer)); ++i)
+			syscall_buffer[i] = fifo_read(&keybuffer);
+		
+		copy_to_user (syscall_buffer, buffer, i);
+		rest -= i;
+	}
+	
+	// This is the return point. When we get here, the proccess buffer is full.
+	return count;
+}
+
+/* Misc. */
 
 int sys_getpid() {
 	return current()->PID;
@@ -72,6 +135,8 @@ int sys_gettime() {
 int sys_ni_syscall() {
 	return -38; /*ENOSYS*/
 }
+
+/* Process management */
 
 int sys_fork() {	
 	int PID = get_new_pid();
@@ -259,6 +324,8 @@ int sys_clone (void (*function)(void), void *stack) {
 	return PID;
 }
 
+/* Syncronization */
+
 int sys_sem_init (int n_sem, unsigned int value) {
 	if (n_sem < 0 || n_sem >= SEM_MAX_NUM) return -EINVAL; // Invalid n_sem.
 	if (sem_array[n_sem].owner != NULL) return -EBUSY; // Semaphore unavailible (RESOURCE BUSY).
@@ -289,7 +356,7 @@ int sys_sem_signal (int n_sem) {
 	if (sem_array[n_sem].owner == NULL) return -EINVAL; // Semaphore is not initialized.
 	
 	if (!list_empty(&sem_array[n_sem].blocked)) { // Unblock process
-			update_process_state_rr(list_head_to_task_struct(list_first(&sem_array[n_sem].blocked)), &readyqueue);
+		update_process_state_rr(list_head_to_task_struct(list_first(&sem_array[n_sem].blocked)), &readyqueue);
 	} else { // Increment counter
 		sem_array[n_sem].counter++;
 	}
@@ -309,10 +376,13 @@ int sys_sem_destroy (int n_sem) {
 	return 0;
 }
 
+/* AUX */
+
 int check_fd(int fd, int permissions)
 {
-  if (fd != 1) return -9; /*EBADF*/
-  if (permissions != ESCRIPTURA) return -13; /*EACCES*/
+  if (fd != 1 && fd != 0) return -9; /*EBADF*/
+  if ((fd == 1) && (permissions != ESCRIPTURA)) return -13; /*EACCES*/
+  if ((fd == 0) && (permissions != LECTURA)) return -13; /*EACCES*/
   return 0;
 }
 

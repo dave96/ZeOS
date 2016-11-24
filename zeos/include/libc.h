@@ -17,6 +17,8 @@ int errno;
 
 int write(int fd, char *buffer, int size);
 
+int read(int fd, char *buf, int count);
+
 void itoa(int a, char *b);
 
 int strlen(char *a);

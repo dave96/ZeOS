@@ -159,6 +159,7 @@ void init_sched(){
 	// Init list_head structures for queues.
 	INIT_LIST_HEAD(&freequeue);
 	INIT_LIST_HEAD(&readyqueue);
+	INIT_LIST_HEAD(&keyboardqueue);
 	
 	// Set initial PID.
 	current_pid = 100;
@@ -281,6 +282,14 @@ int get_quantum(struct task_struct *t) {
 void set_quantum(struct task_struct *t, int new_quantum) {
 	t->quantum = new_quantum;
 	if (t == current()) current_ticks_left = new_quantum;
+}
+
+void block(struct task_struct *t) {
+	update_process_state_rr(t, &keyboardqueue);
+	sched_next_rr();
+}
+void unblock(struct task_struct *t) {
+	update_process_state_rr(t, &readyqueue);
 }
 
 /* STATISTICAL INFORMATION */

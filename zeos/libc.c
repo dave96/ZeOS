@@ -105,6 +105,23 @@ int write(int fd, char *buffer, int size) {
 	return ret;
 }
 
+int read(int fd, char *buf, int count) {
+	int ret;
+	
+	__asm__ __volatile__ ("movl $3, %%eax\n\t"
+						"int $0x80\n\t"
+						"movl %%eax, %0"
+						: "=r" (ret)
+						: "b" (fd), "c" (buf), "d" (count)
+						: "eax");
+	
+	if (ret < 0) {
+		errno = ret*(-1);
+		return -1;
+	}
+	return ret;
+}
+
 void pprint(char * s) {
 	write(1, s, strlen(s));
 }

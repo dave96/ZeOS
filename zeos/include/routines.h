@@ -2,6 +2,8 @@
 #define __DATA_PORT 0x60
 #endif
 
+#include <fifo.h>
+
 #define LECTURA 0
 #define ESCRIPTURA 1
 
@@ -17,6 +19,7 @@
 // Estructuras
 extern char char_map[];
 int	zeos_ticks;
+fifo keybuffer;
 
 // Interrupciones
 void keyboard_routine();
@@ -24,6 +27,7 @@ void clock_routine();
 
 // Llamadas a sistema
 int sys_write(int fd, char * buffer, int size);
+int sys_read (int fd, char * buffer, int count);
 int sys_getpid();
 int sys_gettime();
 int sys_fork();

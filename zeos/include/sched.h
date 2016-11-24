@@ -38,9 +38,10 @@ struct task_struct {
   page_table_entry * dir_pages_baseAddr; /* Page directory address */
   struct list_head list; /* List anchor for blocked, ready and free queues */
   unsigned long esp; /* Process kernel stack pointer to restore on context switch */
+  struct stats st; /* Info for get_stats syscall */
   int quantum; /* Scheduling variable */
   int status; /* ALIVE/DEAD */
-  struct stats st; /* Info for get_stats syscall */
+  int blocked_count;
 };
 
 
@@ -75,6 +76,7 @@ struct task_struct *idle_task;
 
 struct list_head freequeue;
 struct list_head readyqueue;
+struct list_head keyboardqueue;
 
 struct semaphore sem_array[SEM_MAX_NUM];
 
@@ -116,6 +118,9 @@ int get_quantum(struct task_struct *t);
 void set_quantum(struct task_struct *t, int new_quantum);
 
 void schedule(void);
+
+void block(struct task_struct *t);
+void unblock(struct task_struct *t);
 
 int current_ticks_left;
 
