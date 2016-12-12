@@ -10,7 +10,7 @@
 #include <segment.h>
 #include <fifo.h>
 
-#define  KERNEL_BUFFER_SIZE  100
+#define  KERNEL_BUFFER_SIZE 50
 
 char syscall_buffer[KERNEL_BUFFER_SIZE];
 
@@ -30,8 +30,6 @@ void keyboard_routine() {
 		} else {
 			fifo_write(&keybuffer, 'C');
 		}
-		
-		
 		
 		if(!list_empty(&keyboardqueue)) {
 			// We have processes waiting for I/O
@@ -82,7 +80,7 @@ int sys_write(int fd, char * buffer, int size) {
 int sys_read (int fd, char *buffer, int count) {
 	// Check fd
 	int err = check_fd(fd, LECTURA);
-	if (err < 0) return err;
+	if (err < 0) return -EBADF;
 	
 	// Check buffer address
 	if (buffer == NULL) return -EFAULT;
@@ -111,10 +109,10 @@ int sys_read (int fd, char *buffer, int count) {
 			sched_next_rr();
 		}
 		
-		for (i = 0; i < KERNEL_BUFFER_SIZE && i <= rest && !(fifo_empty(keybuffer)); ++i)
+		for (i = 0; (i < KERNEL_BUFFER_SIZE) && (i < rest) && !(fifo_empty(keybuffer)); ++i)
 			syscall_buffer[i] = fifo_read(&keybuffer);
 		
-		copy_to_user (syscall_buffer, buffer, i);
+		copy_to_user (syscall_buffer, (void *) ((long) buffer + (long) (count - rest)), i);
 		rest -= i;
 	}
 	

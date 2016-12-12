@@ -21,7 +21,7 @@ char fifo_read(fifo * b) {
 
 void fifo_write(fifo * b, char w) {
 	if (b->full) return;
-	b->buffer[b->write_p];
+	b->buffer[b->write_p] = w;
 	fifo_incr(b->write_p);
 	if (b->write_p == b->read_p) b->full = 1;
 }

@@ -18,9 +18,8 @@ int __attribute__ ((__section__(".text.main")))
 	return 0;
 	* */
 
-	while(read(0, buff, 1))
-		write(1, buff, 1);
-	
+	runjp();
+
 	while(1);
 }
 

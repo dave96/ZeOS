@@ -6,7 +6,7 @@
 #ifndef __FIFO_H__
 #define __FIFO_H__
 
-#define FIFO_SIZE 50
+#define FIFO_SIZE 10
 
 #define fifo_full(t)	(t.full)
 #define fifo_incr(t)	t = (t + 1) % FIFO_SIZE 
