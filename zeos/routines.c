@@ -374,6 +374,62 @@ int sys_sem_destroy (int n_sem) {
 	return 0;
 }
 
+/* Memory */
+void * sys_sbrk(int increment) {
+	int inc_aux = increment;
+	page_table_entry * pt = get_PT(current());
+	
+	if (increment < 0) {
+		// Decrement HEAP Size.
+		if (increment > TOTAL_HEAP_SIZE) return -EINVAL;
+
+		while(inc_aux >= PAGE_SIZE) {
+			free_frame(get_frame(pt, LAST_HEAP_PAGE));
+			del_ss_pag(pt, LAST_HEAP_PAGE);
+			inc_aux -= PAGE_SIZE;
+		}
+		
+		current()->program_break -= (void *) ((-1) * increment);
+		
+		// Flush TLB
+		set_cr3(get_DIR(current()));
+	} else if (increment > 0) {
+		// Increment HEAP Size.
+		while(inc_aux >= PAGE_SIZE) {			
+			int frame = alloc_frame();
+			if (frame < 0) {
+				// No memory availible! We will recursively revert the changes we have made.
+				sys_sbrk((-1) * (increment - inc_aux));
+				return -ENOMEM;
+			}
+			set_ss_pag(pt, LAST_HEAP_PAGE+1, frame);
+			current()->program_break += PAGE_SIZE;
+			inc_aux -= PAGE_SIZE;
+		}
+		
+		// The rest. Do we need another page?
+		
+		if(LAST_PAGE_AVAIL < inc_aux) {
+			// yes.
+			int frame = alloc_frame();
+			if (frame < 0) {
+				// No memory availible! We will recursively revert the changes we have made.
+				sys_sbrk((-1) * (increment - inc_aux));
+				return -ENOMEM;
+			}
+			set_ss_pag(pt, LAST_HEAP_PAGE+1, frame);
+			current()->program_break += inc_aux;
+		} else {
+			// no.
+			current()->program_break += inc_aux;	
+		}
+		
+		// Flush TLB
+		set_cr3(get_DIR(current()));
+	}
+	return current()->program_break;
+}
+
 /* AUX */
 
 int check_fd(int fd, int permissions)

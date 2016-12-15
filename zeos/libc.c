@@ -242,3 +242,21 @@ int clone (void (*function)(void), void *stack) {
 	}
 	return ret;
 }
+
+void * sbrk (int increment) {
+	void * ret;
+	
+	__asm__ __volatile__ ("movl $45, %%eax\n\t"
+						"int $0x80\n\t"
+						"movl %%eax, %0"
+						: "=r" (ret)
+						: "b" (increment)
+						: "eax");
+	
+	if (ret < 0) {
+		errno = ((int) ret) * (-1);
+		return -1;
+	}
+	return ret;
+}
+

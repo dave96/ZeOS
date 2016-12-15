@@ -19,6 +19,10 @@
 #define STATUS_DEAD 	0
 #define STATUS_ALIVE	1
 
+#define CEILING(X, A) (X%A > 0 ? X/A+1 : X/A)
+#define TOTAL_HEAP_SIZE (current()->program_break-(PAG_LOG_INIT_HEAP*PAGE_SIZE))
+#define LAST_HEAP_PAGE  PAG_LOG_INIT_HEAP+CEILING((current()->program_break-(PAG_LOG_INIT_HEAP*PAGE_SIZE)),PAGE_SIZE)
+
 enum state_t { ST_RUN, ST_READY, ST_BLOCKED };
 
 int current_pid;
@@ -41,7 +45,8 @@ struct task_struct {
   struct stats st; /* Info for get_stats syscall */
   int quantum; /* Scheduling variable */
   int status; /* ALIVE/DEAD */
-  int blocked_count;
+  int blocked_count; /* Keyboard Interrupt Pending bytes */
+  void * program_break; /* HEAP Limit (Program Break) */
 };
 
 

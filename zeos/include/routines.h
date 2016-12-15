@@ -38,6 +38,7 @@ int sys_sem_init (int n_sem, unsigned int value);
 int sys_sem_wait (int n_sem);
 int sys_sem_signal (int n_sem);
 int sys_sem_destroy (int n_sem);
+void * sys_sbrk(int increment);
 
 // Uso externo
 void init_interrupt_handlers();

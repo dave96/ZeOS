@@ -144,6 +144,9 @@ void init_task1(void)
 	init_stats(new);
 	new->st.total_trans++;
 	
+	// Configuramos el heap vacío.
+	new->program_break = (PAG_LOG_INIT_HEAP * PAGE_SIZE);
+	
 	// Update del TSS para apuntar a la system stack de new
 	union task_union * t = (union task_union *) new;
 	tss.esp0 = KERNEL_ESP(t);
